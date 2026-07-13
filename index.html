@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Рулетка</title>
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  overflow-x: hidden;
+}
+
+h1 {
+  font-size: 2.5rem;
+  margin-bottom: 30px;
+  text-shadow: 0 0 20px rgba(255,255,255,0.3);
+  letter-spacing: 2px;
+}
+
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30px;
+  width: 100%;
+  max-width: 900px;
+  padding: 20px;
+}
+
+.input-section {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.input-section input {
+  flex: 1;
+  padding: 14px 20px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.input-section input::placeholder {
+  color: rgba(255,255,255,0.4);
+}
+
+.input-section input:focus {
+  border-color: #a855f7;
+  box-shadow: 0 0 15px rgba(168,85,247,0.3);
+}
+
+.btn-add {
+  padding: 14px 24px;
+  background: linear-gradient(135deg, #a855f7, #6366f1);
+  border: none;
+  border-radius: 12px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-add:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(168,85,247,0.4);
+}
+
+.btn-add:active {
+  transform: translateY(0);
+}
+
+.players-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  min-height: 40px;
+}
+
+.player-tag {
+  padding: 8px 16px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 20px;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: tagIn 0.3s ease;
+  cursor: default;
+  transition: background 0.2s;
+}
+
+.player-tag:hover {
+  background: rgba(255,255,255,0.18);
+}
+
+.player-tag .remove {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(239,68,68,0.6);
+  border: none;
+  color: #fff;
+  font-size: 0.7rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.player-tag .remove:hover {
+  background: #ef4444;
+}
+
+@keyframes tagIn {
+  from { opacity: 0; transform: scale(0.7); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.roulette-wrapper {
+  position: relative;
+  width: 340px;
+  height: 340px;
+}
+
+.roulette-border {
+  position: absolute;
+  inset: -15px;
+  border-radius: 50%;
+  background: conic-gradient(#a855f7, #6366f1, #3b82f6, #a855f7);
+  z-index: 0;
+  animation: borderGlow 3s linear infinite;
+}
+
+@keyframes borderGlow {
+  0%, 100% { filter: brightness(1) drop-shadow(0 0 10px rgba(168,85,247,0.5)); }
+  50% { filter: brightness(1.3) drop-shadow(0 0 25px rgba(168,85,247,0.8)); }
+}
+
+.roulette-border::after {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: #1a1a3e;
+}
+
+canvas#rouletteCanvas {
+  position: relative;
+  z-index: 1;
+  border-radius: 50%;
+  filter: drop-shadow(0 0 15px rgba(0,0,0,0.5));
+}
+
+.pointer {
+  position: absolute;
+  top: -22px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  width: 0;
+  height: 0;
+  border-left: 18px solid transparent;
+  border-right: 18px solid transparent;
+  border-top: 40px solid #facc15;
+  filter: drop-shadow(0 0 10px rgba(250,204,21,0.6));
+}
+
+.pointer::after {
+  content: '';
+  position: absolute;
+  top: -44px;
+  left: -8px;
+  width: 16px;
+  height: 16px;
+  background: #facc15;
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(250,204,21,0.8);
+}
+
+.btn-spin {
+  padding: 18px 60px;
+  background: linear-gradient(135deg, #f97316, #ef4444);
+  border: none;
+  border-radius: 16px;
+  color: #fff;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: 3px;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  text-transform: uppercase;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-spin::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2), transparent);
+}
+
+.btn-spin:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 30px rgba(249,115,22,0.5);
+}
+
+.btn-spin:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.btn-spin:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.winner-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s;
+}
+
+.winner-overlay.show {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.winner-card {
+  background: linear-gradient(135deg, #1e1b4b, #312e81);
+  border: 2px solid rgba(168,85,247,0.5);
+  border-radius: 24px;
+  padding: 50px 60px;
+  text-align: center;
+  transform: scale(0.5);
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 60px rgba(168,85,247,0.3);
+}
+
+.winner-overlay.show .winner-card {
+  transform: scale(1);
+}
+
+.winner-card h2 {
+  font-size: 1.2rem;
+  color: #a78bfa;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+}
+
+.winner-card .winner-name {
+  font-size: 3rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #facc15, #f97316);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 30px;
+}
+
+.btn-close {
+  padding: 12px 40px;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 10px;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-close:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.confetti-container {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1001;
+  overflow: hidden;
+}
+
+.confetti {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  top: -20px;
+  animation: confettiFall linear forwards;
+}
+
+@keyframes confettiFall {
+  to {
+    top: 110vh;
+    transform: rotate(720deg);
+  }
+}
+
+.empty-state {
+  color: rgba(255,255,255,0.3);
+  font-style: italic;
+}
+
+.counter {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.4);
+}
+
+@media (max-width: 600px) {
+  h1 { font-size: 1.8rem; }
+  .roulette-wrapper { width: 280px; height: 280px; }
+  canvas#rouletteCanvas { width: 280px; height: 280px; }
+  .btn-spin { padding: 14px 40px; font-size: 1.1rem; }
+}
+</style>
+</head>
+<body>
+
+<h1>🎰 Рулетка</h1>
+
+<div class="container">
+  <div class="input-section">
+    <input type="text" id="nicknameInput" placeholder="Введите ник..." maxlength="20">
+    <button class="btn-add" onclick="addPlayer()">Добавить</button>
+  </div>
+
+  <div class="players-list" id="playersList">
+    <span class="empty-state">Добавьте участников</span>
+  </div>
+  <div class="counter" id="counter"></div>
+
+  <div class="roulette-wrapper" id="rouletteWrapper">
+    <div class="roulette-border"></div>
+    <div class="pointer"></div>
+    <canvas id="rouletteCanvas" width="340" height="340"></canvas>
+  </div>
+
+  <button class="btn-spin" id="btnSpin" onclick="spin()" disabled>Крутить</button>
+</div>
+
+<div class="winner-overlay" id="winnerOverlay">
+  <div class="winner-card">
+    <h2>Победитель</h2>
+    <div class="winner-name" id="winnerName"></div>
+    <button class="btn-close" onclick="closeWinner()">Закрыть</button>
+  </div>
+</div>
+<div class="confetti-container" id="confettiContainer"></div>
+
+<script>
+const COLORS = [
+  '#ef4444','#f97316','#eab308','#22c55e','#06b6d4',
+  '#3b82f6','#8b5cf6','#ec4899','#f43f5e','#14b8a6',
+  '#a855f7','#6366f1','#0ea5e9','#84cc16','#fb923c'
+];
+
+let players = [];
+let spinning = false;
+let currentAngle = 0;
+
+const canvas = document.getElementById('rouletteCanvas');
+const ctx = canvas.getContext('2d');
+const size = 340;
+const center = size / 2;
+const radius = center - 10;
+
+function addPlayer() {
+  const input = document.getElementById('nicknameInput');
+  const name = input.value.trim();
+  if (!name) return;
+  if (players.length >= 20) { alert('Максимум 20 участников'); return; }
+  players.push(name);
+  input.value = '';
+  input.focus();
+  renderPlayers();
+  drawWheel();
+}
+
+document.getElementById('nicknameInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') addPlayer();
+});
+
+function removePlayer(idx) {
+  players.splice(idx, 1);
+  renderPlayers();
+  drawWheel();
+}
+
+function renderPlayers() {
+  const list = document.getElementById('playersList');
+  const counter = document.getElementById('counter');
+  if (players.length === 0) {
+    list.innerHTML = '<span class="empty-state">Добавьте участников</span>';
+    counter.textContent = '';
+    document.getElementById('btnSpin').disabled = true;
+    return;
+  }
+  list.innerHTML = players.map((p, i) =>
+    `<div class="player-tag">${esc(p)}<button class="remove" onclick="removePlayer(${i})">✕</button></div>`
+  ).join('');
+  counter.textContent = `${players.length} участник(ов)`;
+  document.getElementById('btnSpin').disabled = players.length < 2;
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+function drawWheel(angleOffset = 0) {
+  ctx.clearRect(0, 0, size, size);
+  if (players.length === 0) return;
+
+  const sliceAngle = (2 * Math.PI) / players.length;
+
+  players.forEach((name, i) => {
+    const startA = i * sliceAngle + angleOffset;
+    const endA = startA + sliceAngle;
+    const color = COLORS[i % COLORS.length];
+
+    // slice
+    ctx.beginPath();
+    ctx.moveTo(center, center);
+    ctx.arc(center, center, radius, startA, endA);
+    ctx.closePath();
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.3)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // text
+    ctx.save();
+    ctx.translate(center, center);
+    ctx.rotate(startA + sliceAngle / 2);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#fff';
+    ctx.shadowColor = 'rgba(0,0,0,0.6)';
+    ctx.shadowBlur = 4;
+    const fontSize = players.length > 8 ? 11 : 13;
+    ctx.font = `bold ${fontSize}px Segoe UI, sans-serif`;
+    const displayName = name.length > 12 ? name.slice(0, 11) + '…' : name;
+    ctx.fillText(displayName, radius - 15, 4);
+    ctx.restore();
+  });
+
+  // center circle
+  ctx.beginPath();
+  ctx.arc(center, center, 30, 0, 2 * Math.PI);
+  ctx.fillStyle = '#1a1a3e';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(168,85,247,0.6)';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+}
+
+function spin() {
+  if (spinning || players.length < 2) return;
+  spinning = true;
+  document.getElementById('btnSpin').disabled = true;
+
+  const sliceAngle = (2 * Math.PI) / players.length;
+  const winnerIdx = Math.floor(Math.random() * players.length);
+
+  // pointer is at top (270° = -π/2)
+  // winner slice center should align with pointer
+  // we need: (winnerIdx * sliceAngle + totalSpin + sliceAngle/2) mod 2π == 3π/2
+  const targetSliceCenter = winnerIdx * sliceAngle + sliceAngle / 2;
+  const spins = 5 + Math.floor(Math.random() * 4);
+  const finalAngle = spins * 2 * Math.PI + (3 * Math.PI / 2 - targetSliceCenter);
+
+  const startAngle = 0;
+  const duration = 4000 + Math.random() * 1500;
+  const startTime = performance.now();
+
+  function easeOut(t) {
+    return 1 - Math.pow(1 - t, 4);
+  }
+
+  function animate(now) {
+    const elapsed = now - startTime;
+    const t = Math.min(elapsed / duration, 1);
+    const eased = easeOut(t);
+    const currentA = startAngle + (finalAngle - startAngle) * eased;
+    currentAngle = currentA;
+    drawWheel(currentA);
+
+    if (t < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      spinning = false;
+      showWinner(players[winnerIdx]);
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+
+function showWinner(name) {
+  document.getElementById('winnerName').textContent = name;
+  document.getElementById('winnerOverlay').classList.add('show');
+  spawnConfetti();
+}
+
+function closeWinner() {
+  document.getElementById('winnerOverlay').classList.remove('show');
+  document.getElementById('btnSpin').disabled = players.length < 2;
+}
+
+function spawnConfetti() {
+  const container = document.getElementById('confettiContainer');
+  container.innerHTML = '';
+  const colors = ['#ef4444','#f97316','#eab308','#22c55e','#3b82f6','#8b5cf6','#ec4899'];
+  for (let i = 0; i < 80; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti';
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.background = colors[Math.floor(Math.random() * colors.length)];
+    el.style.width = (6 + Math.random() * 8) + 'px';
+    el.style.height = (6 + Math.random() * 8) + 'px';
+    el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    el.style.animationDuration = (2 + Math.random() * 2) + 's';
+    el.style.animationDelay = Math.random() * 0.8 + 's';
+    el.style.opacity = 0.8 + Math.random() * 0.2;
+    container.appendChild(el);
+  }
+  setTimeout(() => container.innerHTML = '', 4500);
+}
+
+drawWheel();
+</script>
+</body>
+</html>
